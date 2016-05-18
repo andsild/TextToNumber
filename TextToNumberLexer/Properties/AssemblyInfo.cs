@@ -5,11 +5,11 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("TextToNumberParser")]
+[assembly: AssemblyTitle("TextToNumberLexer")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("TextToNumberParser")]
+[assembly: AssemblyProduct("TextToNumberLexer")]
 [assembly: AssemblyCopyright("Copyright ©  2016")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
@@ -20,7 +20,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("8707c97a-a3cc-4096-be29-2283aedbc2db")]
+[assembly: Guid("4e33a3bc-e494-42d0-8f73-874701d89579")]
 
 // Version information for an assembly consists of the following four values:
 //

@@ -5,15 +5,16 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{8707C97A-A3CC-4096-BE29-2283AEDBC2DB}</ProjectGuid>
+    <ProjectGuid>{4E33A3BC-E494-42D0-8F73-874701D89579}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>TextToNumberParser</RootNamespace>
-    <AssemblyName>TextToNumberParser</AssemblyName>
-    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
+    <RootNamespace>TextToNumberLexer</RootNamespace>
+    <AssemblyName>TextToNumberLexer</AssemblyName>
+    <TargetFrameworkVersion>v4.5.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <NuGetPackageImportStamp>
     </NuGetPackageImportStamp>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -67,19 +68,14 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="MainParser.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="ThrowExceptionErrorListener.cs" />
-    <Compile Include="Visitor.cs" />
   </ItemGroup>
   <ItemGroup>
+    <Antlr4 Include="TextNumber.g4">
+      <Generator>MSBuild:Compile</Generator>
+      <CustomToolNamespace>TextToNumberParser</CustomToolNamespace>
+    </Antlr4>
     <None Include="packages.config" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\TextToNumberLexer\TextToNumberLexer.csproj">
-      <Project>{4e33a3bc-e494-42d0-8f73-874701d89579}</Project>
-      <Name>TextToNumberLexer</Name>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
