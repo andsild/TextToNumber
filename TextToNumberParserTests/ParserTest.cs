@@ -1,5 +1,6 @@
 ﻿using NUnit.Framework;
 using Should;
+using TextToNumberParser;
 
 namespace TextToNumberParserTests
 {
@@ -9,7 +10,7 @@ namespace TextToNumberParserTests
         [Test]
         public void ParseGrammar_Regex_Works()
         {
-            1.ShouldEqual(1);
+            MainParser.Evaluate("1").ShouldEqual(1);
         }
     }
 }

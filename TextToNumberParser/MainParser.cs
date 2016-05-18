@@ -16,7 +16,7 @@ namespace TextToNumberParser
 
             var tree = parser.compileUnit();
 
-            var visitor = new TextNumberBaseVisitor<int>();
+            var visitor = new NumberVisitor();
 
             return visitor.Visit(tree);
         }

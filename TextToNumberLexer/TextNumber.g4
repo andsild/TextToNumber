@@ -7,23 +7,54 @@ grammar TextNumber;
 compileUnit : expression+ EOF;
 
 expression :
-    expression MULTIPLY expression #Multiplication
-	| expression DIVIDE expression #Division
-	| expression ADD expression #Addition
-	| expression SUBTRACT expression #Subtraction
-	| NUMBER #Number
+	unit hundrer and expression #bigexpression
+	| doubleunit hundrer and expression #bigexpression
+	| tenner and unit
+	| doubleunit
+	| unit
 	; 
+
+unit : 
+	DIGIT # DigitUnit
+	| UNIT # WrittenUnit
+	| /* epsilon */
+	;
+
+doubleunit:
+	DOUBLE_UNIT #DoubleUnit
+	| DOUBLE_UNIT_DIGITS
+	;
+
+tenner:
+	TWO_DIGITS # DigitTenner
+	| TENNER UNIT
+	;
+
+hundrer:
+	UNIT HUNDRER 
+	| DOUBLEUNIT HUNDRER
+	| TENNER HUNDRER
+	| HUNDRER
+	;
+	
+and:
+	"and"
+	| /* epsilon */
+	;
 
 /*
  * Lexer Rules
  */
 
-NUMBER : INT; //Leave room to extend what kind of math we can do.
+SCALE_NUMBER : ONE_OR_TWO_DIGITS; 
+DIGIT: '0'+('1'..'9')
 
-INT : ('0'..'9')+;
-MULTIPLY : '*';
-DIVIDE : '/';
-SUBTRACT : '-';
-ADD : '+';
+DOUBLE_UNIT_DIGITS: '0'+('1')('1'..'9')
+TWO_DIGITS: '0'+('1'..'9')('0'..'9');  
+
+UNIT: 'zero' | 'one' | 'two' | 'three' | 'four' | 'five' | 'six' | 'seven' | 'eight' | 'nine';
+DOUBLE_UNIT : 'ten' | 'eleven' | 'twelve' | 'thirteen' | 'fourteen' | 'fifteen' | 'sixteen' | 'seventeen' | 'eightteen' | 'nineteen' ;
+TENNER: 'ten' | 'twenty' | 'thirty' | 'forty' | 'fifty' | 'sixty' | 'seventy' | 'eighty' | 'ninety' ;
+HUNDRER: 'hundred' | 'thousand' | 'million' ;
 
 WS : [ \t\r\n] -> channel(HIDDEN);
