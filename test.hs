@@ -1,28 +1,17 @@
-import Control.Applicative hiding (many)
-import Data.List
-import Data.Maybe
-import Text.Parsec hiding ((<|>))
+import Control.Applicative((<*))
+import Text.Parsec 
+import Text.Parsec.Expr
+import Text.Parsec.String
 import Text.Parsec.Language
 import Text.Parsec.Token
 
-list :: [String]
-list = ["zero", "one", "two"]
-
-singleUnitParser:: Parsec String st String
-singleUnitParser = try (string "one") <|> string "two"
-
-type TNumber = Int
-type TString = String
- 
-data TOperator = TAnd
-               | THyphen
-               | TEpsilon
-                 deriving (Eq, Ord, Show)
- 
-data TExpression = TNode (TExpression) TOperator (TExpression)
-                 | TTerminal TNumber
-                 | TUnit TString
-                   deriving (Show)
+data Expr = Var String | Con Bool | Uno Unop Expr | Duo Duop Expr Expr | NaturalJoin Stmt Stmt
+  deriving Show
+data Unop = Not deriving Show
+data Duop = And | Iff deriving Show
+data Stmt = Nop | String := Expr | If Expr Stmt Stmt | While Expr Stmt
+          | Seq [Stmt] | Number Integer | SmallerNumber Integer
+    deriving Show
 
 def :: LanguageDef st
 def = emptyDef{ commentStart = "{-"
@@ -31,10 +20,16 @@ def = emptyDef{ commentStart = "{-"
               , identLetter = alphaNum
               , opStart = oneOf "-"
               , opLetter = oneOf "-"
-              , reservedOpNames = ["-"]
-              , reservedNames = ["and"]
+              , reservedOpNames = ["and"]
+              , reservedNames = []
               }
-lexer = makeTokenParser def
+TokenParser{ parens = m_parens
+           , identifier = m_identifier
+           , reservedOp = m_reservedOp
+           , reserved = m_reserved
+           , natural = m_natural
+           , semiSep1 = m_semiSep1
+           , whiteSpace = m_whiteSpace } = makeTokenParser def
 
 exprparser :: Parser Expr
 exprparser = buildExpressionParser table term <?> "expression"
@@ -44,43 +39,69 @@ table = [ [Prefix (m_reservedOp "~" >> return (Uno Not))]
         ]
 term = m_parens exprparser
        <|> fmap Var m_identifier
+       -- <|> fmap Natural m_natural
+       -- <|> (NaturalJoin m_natural m_natural  >> return (NaturalJoin ))
        <|> (m_reserved "true" >> return (Con True))
        <|> (m_reserved "false" >> return (Con False))
 
-numberParser:: Parsec String st TNumber
-numberParser = read <$> many ( oneOf "0123456789")
- 
-operatorParser:: Parsec String st TOperator
-operatorParser = chooseOp <$> (try (string "and") <|> string "-" <|> string "")
-                   where chooseOp "+" = TAnd
-                         chooseOp "and" = THyphen
-                         chooseOp "" = TEpsilon
+mainparser :: Parser Stmt
+mainparser = m_whiteSpace >> stmtparser <* eof
+    where
+      stmtparser :: Parser Stmt
+      stmtparser = fmap Seq (m_semiSep1 stmt1)
+      stmt1 = (m_reserved "nop" >> return Nop)
+              <|> do { v <- m_identifier
+                     ; m_reservedOp ":="
+                     ; e <- exprparser
+                     ; return (v := e)
+                     }
+              <|> do { num <- m_natural
+                    ; if num > 10 then return (Number num) else return (SmallerNumber num)
+              }
+              <|> do { m_reserved "if"
+                     ; b <- exprparser
+                     ; m_reserved "then"
+                     ; p <- stmtparser
+                     ; m_reserved "else"
+                     ; q <- stmtparser
+                     ; m_reserved "fi"
+                     ; return (If b p q)
+                     }
+              <|> do { m_reserved "while"
+                     ; b <- exprparser
+                     ; m_reserved "do"
+                     ; p <- stmtparser
+                     ; m_reserved "od"
+                     ; return (While b p)
+                     }
 
 
+pairwise :: [Int] -> [(Int, Int)]
+pairwise xs = zip (0 : xs) xs
 
-expressionParser:: Parsec String st TExpression
-expressionParser = --[between (char '(') (char ')') binaryExpressionParser] <|>
-                   --TNode unitParser <|>
-                   (TUnit <$> singleUnitParser) <|>
-                   (TTerminal <$> numberParser)
+valueOf :: Stmt -> Integer
+valueOf stmt = case stmt of
+  (Number num) -> num
+  (SmallerNumber num) -> num
 
-unitParser :: Parsec String st TExpression
-unitParser = TNode <$> expressionParser <*> operatorParser <*> expressionParser
- 
--- binaryExpressionParser:: Parsec String st TExpression
--- binaryExpressionParser = TNode <$> expressionParser <*> operatorParser <*> expressionParser
 
-evaluate:: TExpression -> TNumber
-evaluate (TNode _ THyphen _)      = 0
-evaluate (TNode _ TEpsilon _)      = 0
-evaluate (TNode exp1 TAnd exp2)      = evaluate exp1 + evaluate exp2
-evaluate (TTerminal v)               = v
-evaluate (TUnit v)               = fromMaybe 0 (elemIndex v list)
+parseFuck :: [Stmt] -> [Integer]
+parseFuck [] = []
+parseFuck [x] = [valueOf x]
+parseFuck (x:xs) = [valueOf x] ++ parseFuck xs
+
+complexShit li = (sum li)
+
+interpreter :: Stmt -> Integer
+interpreter (Seq a) = complexShit $  parseFuck a
+-- interpreter a = case a of
+--   (Seq b) -> parseFuck a
+--   Nop -> 313
 
 main :: IO ()
 main = do
   c <- getContents
-  case parse expressionParser "(stdin)" c of
+  case parse mainparser "(stdin)" c of
           Left e -> do putStrLn "Error parsing input:"
                        print e
-          Right r -> print $ evaluate r  
+          Right r -> print $ interpreter r
