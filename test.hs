@@ -5,6 +5,10 @@ import Text.Parsec.String
 import Text.Parsec.Language
 import Text.Parsec.Token
 
+-- TODO: parse numbers based on class (small, bigger, biggest)
+-- then you can add production rules for e.g. "thiry two" as "tenner unit"
+-- and input like "3 2" is invalid (since no one would say "3 2" as a number
+
 data Expr = Var String | Con Bool | Uno Unop Expr | Duo Duop Expr Expr | NaturalJoin Stmt Stmt
   deriving Show
 data Unop = Not deriving Show
@@ -44,6 +48,10 @@ term = m_parens exprparser
        <|> (m_reserved "true" >> return (Con True))
        <|> (m_reserved "false" >> return (Con False))
 
+returnToken num 
+  | num > 10 = Number num
+  | otherwise = SmallerNumber num
+
 mainparser :: Parser Stmt
 mainparser = m_whiteSpace >> stmtparser <* eof
     where
@@ -56,8 +64,8 @@ mainparser = m_whiteSpace >> stmtparser <* eof
                      ; return (v := e)
                      }
               <|> do { num <- m_natural
-                    ; if num > 10 then return (Number num) else return (SmallerNumber num)
-              }
+                    ; return (returnToken num)
+                    }
               <|> do { m_reserved "if"
                      ; b <- exprparser
                      ; m_reserved "then"
