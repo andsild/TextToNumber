@@ -98,9 +98,6 @@ mainparser = stmtWhitespace >> stmtparser CA.<* eof
                      ; return (Join e)
               }
 
-pairwise :: [Int] -> [(Int, Int)]
-pairwise xs = zip (0 : xs) xs
-
 valueOf :: Stmt -> Integer
 valueOf stmt = case stmt of
   (Seq a) -> sum $ recurseOverStatements a
@@ -108,6 +105,9 @@ valueOf stmt = case stmt of
   (UnitNumber (Number num) (Seq a)) -> num + sum (recurseOverStatements a)
   (UnitNumber (Unit num) (Seq a)) -> elemIndex' num  + sum (recurseOverStatements a)
 
+
+pairwise :: [Int] -> [(Int, Int)]
+pairwise xs = zip (0 : xs) xs
 
 recurseOverStatements :: [Stmt] -> [Integer]
 recurseOverStatements [] = []
