@@ -1,17 +1,12 @@
-import Control.Applicative((<*))
+import qualified Control.Applicative as CA
 import Data.List
+import Data.Functor.Identity
 import Data.Maybe
 import Text.Parsec 
 import Text.Parsec.Expr
 import Text.Parsec.String
 import Text.Parsec.Language
 import Text.Parsec.Token
-
-
--- TODO: parse numbers based on class (small, bigger, biggest)
--- then you can add production rules for e.g. "thiry two" as "tenner unit"
--- and input like "3 2" is invalid (since no one would say "3 2" as a number
--- however, we cannot do semantic parsing of the numbers as this is not context free?
 
 data Expr = Var String | Con Bool | Uno Unop Expr | Duo Duop Expr Expr 
   deriving Show
@@ -22,12 +17,26 @@ data Count = Number Integer | Unit String deriving Show
 data Stmt = Seq [Stmt] | UnitNumber Count Stmt | Join Stmt
           deriving Show
 
-unitnumbers :: [String]
-unitnumbers = ["zero", "one", "two", "three"]
+unitNumbers :: [String]
+unitNumbers = ["zero", "one", "two", "three", "four", "five", "six", "seven",
+              "eight", "nine", "ten", "eleven", "twelve", "thirteen", 
+              "fourteen", "fifteen", "sixteen", "seventeen", "eighteen",
+              "nineteen"]
+
+scaleNumbers :: [String]
+scaleNumbers = ["zero", "ten", "twenty", "thirty", "forty", "fifty"]
+
+bigNumbers :: [String]
+bigNumbers = ["zero", "hundred", "thousand", "million"]
 
 elemIndex' :: String -> Integer
-elemIndex' s = toInteger $ fromMaybe 0 $ elemIndex s unitnumbers 
-
+elemIndex' s = toInteger num
+  where
+    unitNumber = fromMaybe 0 $ elemIndex s unitNumbers
+    scaleNumber = 10 * fromMaybe 0 (elemIndex s scaleNumbers)
+    bigNumberResult = fromMaybe 0 (elemIndex s bigNumbers)
+    bigNumber = if bigNumberResult == 0 then 0 else 100 ^ bigNumberResult
+    num = maximum [unitNumber, scaleNumber, bigNumber]
 
 def :: LanguageDef st
 def = emptyDef{ identStart =  alphaNum
@@ -38,22 +47,32 @@ def = emptyDef{ identStart =  alphaNum
               , reservedNames = []
               }
 
-TokenParser{ 
-           identifier = m_identifier 
-           , reservedOp = m_reservedOp
-           , reserved = m_reserved
-           , natural = m_natural
-           , semiSep = m_semiSep
-           , whiteSpace = m_whiteSpace } = makeTokenParser def
+lexer :: GenTokenParser String u Identity
+lexer = makeTokenParser def
+
+stmtIdentifier :: ParsecT String u Identity String
+stmtIdentifier = identifier lexer
+stmtReservedOp :: String -> ParsecT String u Identity ()
+stmtReservedOp = reservedOp lexer
+stmtReserved :: String -> ParsecT String u Identity ()
+stmtReserved   = reserved lexer
+stmtNatural :: ParsecT String u Identity Integer
+stmtNatural    = natural lexer
+stmtSemiSep :: ParsecT String u Identity a -> ParsecT String u Identity [a]
+stmtSemiSep    = semiSep lexer
+stmtWhitespace :: ParsecT String u Identity ()
+stmtWhitespace = whiteSpace lexer
 
 exprparser :: Parser Expr
 exprparser = buildExpressionParser table term <?> "expression"
-table = [ [Prefix (m_reservedOp "~" >> return (Uno Not))]
-        , [Infix (m_reservedOp "&" >> return (Duo Band)) AssocLeft]
-        , [Infix (m_reservedOp "=" >> return (Duo Iff)) AssocLeft]
-        , [Infix (m_reservedOp "and" >> return (Duo Iff)) AssocLeft]
+table :: [[Operator String u Identity Expr]]
+table = [ [Prefix (stmtReservedOp "~" >> return (Uno Not))]
+        , [Infix (stmtReservedOp "&" >> return (Duo Band)) AssocLeft]
+        , [Infix (stmtReservedOp "=" >> return (Duo Iff)) AssocLeft]
+        , [Infix (stmtReservedOp "and" >> return (Duo Iff)) AssocLeft]
         ]
-term = fmap Var m_identifier
+term :: ParsecT String u Identity Expr
+term = fmap Var stmtIdentifier
 
 returnToken :: Integer -> Stmt -> Stmt
 returnToken num = UnitNumber (Number num)
@@ -62,19 +81,19 @@ convert :: String -> Stmt -> Stmt
 convert s = UnitNumber (Unit s)
 
 mainparser :: Parser Stmt
-mainparser = m_whiteSpace >> stmtparser <* eof
+mainparser = stmtWhitespace >> stmtparser CA.<* eof
     where
       stmtparser :: Parser Stmt
-      stmtparser = fmap Seq (m_semiSep stmt1)
-      stmt1 = do { num <- m_natural 
+      stmtparser = fmap Seq (stmtSemiSep stmt1)
+      stmt1 = do { num <- stmtNatural 
                        ; e <- stmtparser
                     ; return (returnToken num e)
                     }
-              <|> do { num <- m_identifier
+              <|> do { num <- stmtIdentifier
                        ; e <- stmtparser
                     ; return (convert num e)
                     }
-              <|> do { m_reservedOp "and"
+              <|> do { stmtReservedOp "and"
                      ; e <- stmtparser
                      ; return (Join e)
               }
@@ -84,21 +103,21 @@ pairwise xs = zip (0 : xs) xs
 
 valueOf :: Stmt -> Integer
 valueOf stmt = case stmt of
-  (Seq a) -> sum $ parseFuck a
+  (Seq a) -> sum $ recurseOverStatements a
   (Join a) -> valueOf a
-  (UnitNumber (Number num) (Seq a)) -> num + sum (parseFuck a)
-  (UnitNumber (Unit num) (Seq a)) -> elemIndex' num  + sum (parseFuck a)
+  (UnitNumber (Number num) (Seq a)) -> num + sum (recurseOverStatements a)
+  (UnitNumber (Unit num) (Seq a)) -> elemIndex' num  + sum (recurseOverStatements a)
 
 
-parseFuck :: [Stmt] -> [Integer]
-parseFuck [] = []
-parseFuck [x] = [valueOf x]
-parseFuck (x:xs) = valueOf x : parseFuck xs
+recurseOverStatements :: [Stmt] -> [Integer]
+recurseOverStatements [] = []
+recurseOverStatements [x] = [valueOf x]
+recurseOverStatements (x:xs) = valueOf x : recurseOverStatements xs
 
 interpreter :: Stmt -> Integer
-interpreter (Seq a) = sum (parseFuck a)
+interpreter (Seq a) = sum (recurseOverStatements a)
 -- interpreter a = case a of
---   (Seq b) -> parseFuck a
+--   (Seq b) -> recurseOverStatements a
 --   Nop -> 313
 
 main :: IO ()
