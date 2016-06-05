@@ -19,8 +19,7 @@ data Unop = Not deriving Show
 data Join = And deriving Show
 data Duop = Band | Iff deriving Show
 data Count = Number Integer | Unit String deriving Show
-data Stmt = Nop | String := Expr | If Expr Stmt Stmt | While Expr Stmt
-          | Seq [Stmt] | UnitNumber Count
+data Stmt = Seq [Stmt] | UnitNumber Count Stmt 
           deriving Show
 
 unitnumbers :: [String]
@@ -53,6 +52,7 @@ exprparser = buildExpressionParser table term <?> "expression"
 table = [ [Prefix (m_reservedOp "~" >> return (Uno Not))]
         , [Infix (m_reservedOp "&" >> return (Duo Band)) AssocLeft]
         , [Infix (m_reservedOp "=" >> return (Duo Iff)) AssocLeft]
+        , [Infix (m_reservedOp "and" >> return (Duo Iff)) AssocLeft]
         ]
 term = m_parens exprparser
        <|> fmap Var m_identifier
@@ -61,10 +61,12 @@ term = m_parens exprparser
        <|> (m_reserved "true" >> return (Con True))
        <|> (m_reserved "false" >> return (Con False))
 
+returnToken :: Integer -> Stmt -> Stmt
 returnToken num = UnitNumber (Number num)
   -- | num > 10 = Number num
   -- | otherwise = SmallerNumber num
 
+convert :: String -> Stmt -> Stmt
 convert s = UnitNumber (Unit s)
 
 mainparser :: Parser Stmt
@@ -72,34 +74,14 @@ mainparser = m_whiteSpace >> stmtparser <* eof
     where
       stmtparser :: Parser Stmt
       stmtparser = fmap Seq (m_semiSep stmt1)
-      stmt1 = (m_reserved "nop" >> return Nop)
-              -- <|> do { v <- m_identifier
-              --        ; m_reservedOp ":="
-              --        ; e <- exprparser
-              --        ; return (v := e)
-              --        }
-              <|> do { num <- m_natural 
-                    ; return (returnToken num)
+      stmt1 = do { num <- m_natural 
+                       ; e <- stmtparser
+                    ; return (returnToken num e)
                     }
               <|> do { num <- m_identifier
-                    ; return (convert num)
+                       ; e <- stmtparser
+                    ; return (convert num e)
                     }
-              <|> do { m_reserved "if"
-                     ; b <- exprparser
-                     ; m_reserved "then"
-                     ; p <- stmtparser
-                     ; m_reserved "else"
-                     ; q <- stmtparser
-                     ; m_reserved "fi"
-                     ; return (If b p q)
-                     }
-              <|> do { m_reserved "while"
-                     ; b <- exprparser
-                     ; m_reserved "do"
-                     ; p <- stmtparser
-                     ; m_reserved "od"
-                     ; return (While b p)
-                     }
 
 takeN :: Integer -> [a] -> [a]
 takeN n l = take (fromIntegral n) l
@@ -109,8 +91,12 @@ pairwise xs = zip (0 : xs) xs
 
 valueOf :: Stmt -> Integer
 valueOf stmt = case stmt of
-  (UnitNumber (Number num)) -> num
-  (UnitNumber (Unit num)) -> elemIndex' num
+  (UnitNumber (Number num) (Seq a)) -> num + sum (parseFuck a)
+  (UnitNumber (Unit num) (Seq a)) -> elemIndex' num 
+
+recursiveStmtParser [] = 0
+recursiveStmtParser [x] = 0
+recursiveStmtParser (x:xs) = 0
 
 
 parseFuck :: [Stmt] -> [Integer]
@@ -118,10 +104,8 @@ parseFuck [] = []
 parseFuck [x] = [valueOf x]
 parseFuck (x:xs) = [valueOf x] ++ parseFuck xs
 
-complexShit li = (sum li)
-
 interpreter :: Stmt -> Integer
-interpreter (Seq a) = complexShit $  parseFuck a
+interpreter (Seq a) = sum (parseFuck a)
 -- interpreter a = case a of
 --   (Seq b) -> parseFuck a
 --   Nop -> 313
