@@ -1,34 +1,22 @@
 import Control.Applicative((<*))
-import Data.List
-import Data.Maybe
 import Text.Parsec 
 import Text.Parsec.Expr
 import Text.Parsec.String
 import Text.Parsec.Language
 import Text.Parsec.Token
 
-
 -- TODO: parse numbers based on class (small, bigger, biggest)
 -- then you can add production rules for e.g. "thiry two" as "tenner unit"
 -- and input like "3 2" is invalid (since no one would say "3 2" as a number
 -- however, we cannot do semantic parsing of the numbers as this is not context free?
 
-data Expr = Var String | Con Bool | Uno Unop Expr | Duo Duop Expr Expr 
+data Expr = Var String | Con Bool | Uno Unop Expr | Duo Duop Expr Expr | NaturalJoin Stmt Stmt
   deriving Show
 data Unop = Not deriving Show
-data Join = And deriving Show
-data Duop = Band | Iff deriving Show
-data Count = Number Integer | Unit String deriving Show
+data Duop = And | Iff deriving Show
 data Stmt = Nop | String := Expr | If Expr Stmt Stmt | While Expr Stmt
-          | Seq [Stmt] | UnitNumber Count
-          deriving Show
-
-unitnumbers :: [String]
-unitnumbers = ["zero", "one", "two", "three"]
-
-elemIndex' :: String -> Integer
-elemIndex' s = toInteger $ fromMaybe 0 $ elemIndex s unitnumbers 
-
+          | Seq [Stmt] | Number Integer | SmallerNumber Integer
+    deriving Show
 
 def :: LanguageDef st
 def = emptyDef{ commentStart = "{-"
@@ -45,13 +33,13 @@ TokenParser{ parens = m_parens
            , reservedOp = m_reservedOp
            , reserved = m_reserved
            , natural = m_natural
-           , semiSep = m_semiSep
+           , semiSep1 = m_semiSep1
            , whiteSpace = m_whiteSpace } = makeTokenParser def
 
 exprparser :: Parser Expr
 exprparser = buildExpressionParser table term <?> "expression"
 table = [ [Prefix (m_reservedOp "~" >> return (Uno Not))]
-        , [Infix (m_reservedOp "&" >> return (Duo Band)) AssocLeft]
+        , [Infix (m_reservedOp "&" >> return (Duo And)) AssocLeft]
         , [Infix (m_reservedOp "=" >> return (Duo Iff)) AssocLeft]
         ]
 term = m_parens exprparser
@@ -61,28 +49,23 @@ term = m_parens exprparser
        <|> (m_reserved "true" >> return (Con True))
        <|> (m_reserved "false" >> return (Con False))
 
-returnToken num = UnitNumber (Number num)
-  -- | num > 10 = Number num
-  -- | otherwise = SmallerNumber num
-
-convert s = UnitNumber (Unit s)
+returnToken num 
+  | num > 10 = Number num
+  | otherwise = SmallerNumber num
 
 mainparser :: Parser Stmt
 mainparser = m_whiteSpace >> stmtparser <* eof
     where
       stmtparser :: Parser Stmt
-      stmtparser = fmap Seq (m_semiSep stmt1)
+      stmtparser = fmap Seq (m_semiSep1 stmt1)
       stmt1 = (m_reserved "nop" >> return Nop)
-              -- <|> do { v <- m_identifier
-              --        ; m_reservedOp ":="
-              --        ; e <- exprparser
-              --        ; return (v := e)
-              --        }
-              <|> do { num <- m_natural 
+              <|> do { v <- m_identifier
+                     ; m_reservedOp ":="
+                     ; e <- exprparser
+                     ; return (v := e)
+                     }
+              <|> do { num <- m_natural
                     ; return (returnToken num)
-                    }
-              <|> do { num <- m_identifier
-                    ; return (convert num)
                     }
               <|> do { m_reserved "if"
                      ; b <- exprparser
@@ -101,16 +84,14 @@ mainparser = m_whiteSpace >> stmtparser <* eof
                      ; return (While b p)
                      }
 
-takeN :: Integer -> [a] -> [a]
-takeN n l = take (fromIntegral n) l
 
 pairwise :: [Int] -> [(Int, Int)]
 pairwise xs = zip (0 : xs) xs
 
 valueOf :: Stmt -> Integer
 valueOf stmt = case stmt of
-  (UnitNumber (Number num)) -> num
-  (UnitNumber (Unit num)) -> elemIndex' num
+  (Number num) -> num
+  (SmallerNumber num) -> num
 
 
 parseFuck :: [Stmt] -> [Integer]
