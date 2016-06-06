@@ -1,4 +1,5 @@
 import qualified Control.Applicative as CA
+import Control.Monad
 import Data.List
 import Data.Functor.Identity
 import Data.Maybe
@@ -34,8 +35,8 @@ elemIndex' s = toInteger num
   where
     unitNumber = fromMaybe 0 $ elemIndex s unitNumbers
     scaleNumber = 10 * fromMaybe 0 (elemIndex s scaleNumbers)
-    bigNumberResult = fromMaybe 0 (elemIndex s bigNumbers)
-    bigNumber = if bigNumberResult == 0 then 0 else 100 ^ bigNumberResult
+    bigNumberResult = 1 + fromMaybe 0 (elemIndex s bigNumbers)
+    bigNumber = if bigNumberResult == 1 then 0 else 10 ^ bigNumberResult
     num = maximum [unitNumber, scaleNumber, bigNumber]
 
 def :: LanguageDef st
@@ -54,8 +55,6 @@ stmtIdentifier :: ParsecT String u Identity String
 stmtIdentifier = identifier lexer
 stmtReservedOp :: String -> ParsecT String u Identity ()
 stmtReservedOp = reservedOp lexer
-stmtReserved :: String -> ParsecT String u Identity ()
-stmtReserved   = reserved lexer
 stmtNatural :: ParsecT String u Identity Integer
 stmtNatural    = natural lexer
 stmtSemiSep :: ParsecT String u Identity a -> ParsecT String u Identity [a]
@@ -98,21 +97,17 @@ mainparser = stmtWhitespace >> stmtparser CA.<* eof
                      ; return (Join e)
               }
 
-valueOf :: Stmt -> Integer
+valueOf :: Stmt -> [Integer]
 valueOf stmt = case stmt of
-  (Seq a) -> sum $ recurseOverStatements a
+  (Seq a) -> recurseOverStatements a
   (Join a) -> valueOf a
-  (UnitNumber (Number num) (Seq a)) -> num + sum (recurseOverStatements a)
-  (UnitNumber (Unit num) (Seq a)) -> elemIndex' num  + sum (recurseOverStatements a)
-
-
-pairwise :: [Int] -> [(Int, Int)]
-pairwise xs = zip (0 : xs) xs
+  UnitNumber (Number num) (Seq a) -> num : recurseOverStatements a
+  UnitNumber (Unit num) (Seq a) -> elemIndex' num  : recurseOverStatements a
 
 recurseOverStatements :: [Stmt] -> [Integer]
 recurseOverStatements [] = []
-recurseOverStatements [x] = [valueOf x]
-recurseOverStatements (x:xs) = valueOf x : recurseOverStatements xs
+recurseOverStatements [x] = valueOf x
+recurseOverStatements (x:xs) = join [valueOf x,recurseOverStatements xs]
 
 interpreter :: Stmt -> Integer
 interpreter (Seq a) = calculateNumber (recurseOverStatements a) 0
