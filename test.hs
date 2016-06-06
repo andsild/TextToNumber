@@ -115,10 +115,19 @@ recurseOverStatements [x] = [valueOf x]
 recurseOverStatements (x:xs) = valueOf x : recurseOverStatements xs
 
 interpreter :: Stmt -> Integer
-interpreter (Seq a) = sum (recurseOverStatements a)
--- interpreter a = case a of
---   (Seq b) -> recurseOverStatements a
---   Nop -> 313
+interpreter (Seq a) = calculateNumber (recurseOverStatements a) 0
+                     -- sum (recurseOverStatements a)
+
+calculateNumber :: [Integer] -> Integer -> Integer
+calculateNumber [] _ = 0
+calculateNumber [x] prev
+  | prev > 0 && prev <  x =  prev * x 
+  | prev > 0 && prev >  x =  prev + x 
+  | otherwise = x
+calculateNumber (x:xs) prev
+  | prev > 0 && prev > x = calculateNumber xs $ prev + x -- e.g. twenty two hundred
+  | prev > 0 && prev < x = prev * x + calculateNumber xs 0 -- e.g. two hundred
+  | otherwise = calculateNumber xs (x + prev) -- e.g. hundred
 
 main :: IO ()
 main = do
