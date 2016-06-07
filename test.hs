@@ -9,6 +9,9 @@ import Text.Parsec.String
 import Text.Parsec.Language
 import Text.Parsec.Token
 
+-- TODO: this is not a CFG, its just string translation
+-- review roman numerals, they have CFGs.
+
 data Expr = Var String | Con Bool | Uno Unop Expr | Duo Duop Expr Expr 
   deriving Show
 data Unop = Not deriving Show
