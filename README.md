@@ -3,7 +3,7 @@ Something of an overkill to transform text to numbers.
 
 | Input                         | Output        |
 | ------------------------------|:--------------|
-| 264                           | 200           |
+| 264                           | 264           |
 | Two hundred 64                | 264           |
 | Two hundred and 64            | 264           |
 | Two hundred and sixty 4       | 264           |
