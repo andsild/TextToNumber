@@ -12,10 +12,11 @@ import Text.Parsec.Token
 -- TODO: this is not a CFG, its just string translation
 -- review roman numerals, they have CFGs.
 
-data Expr = Var String | Con Bool | Uno Unop Expr | Duo Duop Expr Expr 
+data Expr = Var String | Con Bool | Uno Unop Expr | Duo Duop Expr Expr | Binary Stmt Op Stmt | Unary Stmt
   deriving Show
 data Unop = Not deriving Show
 data Join = And deriving Show
+data Op = Minus | Plus deriving Show
 data Duop = Band | Iff deriving Show
 data Count = Number Integer | Unit String deriving Show
 data Stmt = Seq [Stmt] | UnitNumber Count Stmt | Join Stmt
@@ -47,8 +48,8 @@ def = emptyDef{ identStart =  alphaNum
               , identLetter = alphaNum
               , opStart = oneOf "-"
               , opLetter = oneOf "-"
-              , reservedOpNames = ["and"]
-              , reservedNames = []
+              , reservedOpNames = ["-"]
+              , reservedNames = ["and", "-"]
               }
 
 lexer :: GenTokenParser String u Identity
@@ -71,10 +72,11 @@ table :: [[Operator String u Identity Expr]]
 table = [ [Prefix (stmtReservedOp "~" >> return (Uno Not))]
         , [Infix (stmtReservedOp "&" >> return (Duo Band)) AssocLeft]
         , [Infix (stmtReservedOp "=" >> return (Duo Iff)) AssocLeft]
-        , [Infix (stmtReservedOp "and" >> return (Duo Iff)) AssocLeft]
+        , [Infix (stmtReservedOp "-"   >> return (Duo Iff)) AssocLeft]
         ]
+
 term :: ParsecT String u Identity Expr
-term = fmap Var stmtIdentifier
+term = fmap Var stmtIdentifier 
 
 returnToken :: Integer -> Stmt -> Stmt
 returnToken num = UnitNumber (Number num)
@@ -96,6 +98,10 @@ mainparser = stmtWhitespace >> stmtparser CA.<* eof
                     ; return (convert num e)
                     }
               <|> do { stmtReservedOp "and"
+                     ; e <- stmtparser
+                     ; return (Join e)
+              }
+              <|> do { stmtReservedOp "-"
                      ; e <- stmtparser
                      ; return (Join e)
               }
