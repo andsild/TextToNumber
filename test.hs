@@ -1,5 +1,6 @@
 import qualified Control.Applicative as CA
 import Control.Monad
+import Data.Char
 import Data.List
 import Data.Functor.Identity
 import Data.Maybe
@@ -11,6 +12,9 @@ import Text.Parsec.Token
 
 -- TODO: this is not a CFG, its just string translation
 -- review roman numerals, they have CFGs.
+
+-- This program works for normal sentences that only has one number but could be improved a great deal
+-- Its one of my first haskell programs which is why im sort of playing around with syntax
 
 data Expr = Var String | Con Bool | Uno Unop Expr | Duo Duop Expr Expr | Binary Stmt Op Stmt | Unary Stmt
   deriving Show
@@ -111,7 +115,7 @@ valueOf stmt = case stmt of
   (Seq a) -> recurseOverStatements a
   (Join a) -> valueOf a
   UnitNumber (Number num) (Seq a) -> num : recurseOverStatements a
-  UnitNumber (Unit num) (Seq a) -> elemIndex' num  : recurseOverStatements a
+  UnitNumber (Unit num) (Seq a) -> elemIndex' (map toLower num)  : recurseOverStatements a
 
 recurseOverStatements :: [Stmt] -> [Integer]
 recurseOverStatements [] = []
