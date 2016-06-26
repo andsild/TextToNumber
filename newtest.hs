@@ -29,7 +29,7 @@ elemIndex' s = toInteger num
     unitNumber = fromMaybe defaultNumber $ elemIndex s unitNumbers
     scaleNumber = 10 * fromMaybe defaultNumber (elemIndex s scaleNumbers)
     bigNumberResult = 1 + fromMaybe defaultNumber (elemIndex s bigNumbers)
-    bigNumber = if bigNumberResult == 1 then defaultNumber else 10 ^ bigNumberResult
+    bigNumber = if bigNumberResult == 0 then defaultNumber else 10 ^ bigNumberResult
     num = maximum [unitNumber, scaleNumber, bigNumber]
 
 
@@ -82,9 +82,14 @@ interpreter :: Stmt -> Integer -> String
 interpreter (GivenNumber unit stmt) acc = stringacc ++ interpreter stmt newacc
   where
     x = translate unit
-    stringacc = if x > -1 then "" else show acc
+    stringacc = if x > -1 then " " else accOut ++ readStringNumber unit
+    accOut = if acc > 0 then show acc ++ " " else ""
     newacc = if x > -1 then calculateNumber x acc else 0
-interpreter Nil x = show x
+interpreter Nil x = if x > 0 then show x else " "
+
+readStringNumber :: UnitStringNumber -> String
+readStringNumber (IntegerNumber num) = "meg"
+readStringNumber (StringNumber num) = num ++ " "
 
 
 calculateNumber :: Integer -> Integer -> Integer
