@@ -10,17 +10,27 @@ import Text.Parsec.String
 import Text.Parsec.Language
 import Text.Parsec.Token
 
-unitStringNumbers :: [String]
-unitStringNumbers = ["zero", "one", "two", "three", "four", "five", "six", "seven",
+unitNumbers :: [String]
+unitNumbers = ["zero", "one", "two", "three", "four", "five", "six", "seven",
               "eight", "nine", "ten", "eleven", "twelve", "thirteen", 
               "fourteen", "fifteen", "sixteen", "seventeen", "eighteen",
               "nineteen"]
 
-scaleStringNumbers :: [String]
-scaleStringNumbers = ["zero", "ten", "twenty", "thirty", "forty", "fifty"]
+scaleNumbers :: [String]
+scaleNumbers = ["zero", "ten", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety"]
 
-bigStringNumbers :: [String]
-bigStringNumbers = ["zero", "hundred", "thousand", "million"]
+bigNumbers :: [String]
+bigNumbers = ["zero", "hundred", "thousand", "million"]
+
+elemIndex' :: String -> Integer
+elemIndex' s = toInteger num
+  where
+    defaultNumber = -1
+    unitNumber = fromMaybe defaultNumber $ elemIndex s unitNumbers
+    scaleNumber = 10 * fromMaybe defaultNumber (elemIndex s scaleNumbers)
+    bigNumberResult = 1 + fromMaybe defaultNumber (elemIndex s bigNumbers)
+    bigNumber = if bigNumberResult == 1 then defaultNumber else 10 ^ bigNumberResult
+    num = maximum [unitNumber, scaleNumber, bigNumber]
 
 
 data Stmt = GivenNumber UnitStringNumber Stmt | Nil
@@ -73,13 +83,20 @@ interpreter (GivenNumber unit stmt) acc = stringacc ++ interpreter stmt newacc
   where
     x = translate unit
     stringacc = if x > -1 then "" else show acc
-    newacc = if x > -1 then acc + x else 0
+    newacc = if x > -1 then calculateNumber x acc else 0
 interpreter Nil x = show x
+
+
+calculateNumber :: Integer -> Integer -> Integer
+calculateNumber x prev
+  | prev > 0 && prev <  x =  prev * x 
+  | prev > 0 && prev >  x =  prev + x 
+  | otherwise = x
 
 
 translate :: UnitStringNumber -> Integer
 translate (IntegerNumber num) = num
-translate (StringNumber num) = 9001
+translate (StringNumber num) = elemIndex' (map toLower num)
 
 main :: IO ()
 main = do

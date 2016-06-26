@@ -26,26 +26,6 @@ data Count = Number Integer | Unit String deriving Show
 data Stmt = Seq [Stmt] | UnitNumber Count Stmt | Join Stmt
           deriving Show
 
-unitNumbers :: [String]
-unitNumbers = ["zero", "one", "two", "three", "four", "five", "six", "seven",
-              "eight", "nine", "ten", "eleven", "twelve", "thirteen", 
-              "fourteen", "fifteen", "sixteen", "seventeen", "eighteen",
-              "nineteen"]
-
-scaleNumbers :: [String]
-scaleNumbers = ["zero", "ten", "twenty", "thirty", "forty", "fifty"]
-
-bigNumbers :: [String]
-bigNumbers = ["zero", "hundred", "thousand", "million"]
-
-elemIndex' :: String -> Integer
-elemIndex' s = toInteger num
-  where
-    unitNumber = fromMaybe 0 $ elemIndex s unitNumbers
-    scaleNumber = 10 * fromMaybe 0 (elemIndex s scaleNumbers)
-    bigNumberResult = 1 + fromMaybe 0 (elemIndex s bigNumbers)
-    bigNumber = if bigNumberResult == 1 then 0 else 10 ^ bigNumberResult
-    num = maximum [unitNumber, scaleNumber, bigNumber]
 
 def :: LanguageDef st
 def = emptyDef{ identStart =  alphaNum
