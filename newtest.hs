@@ -10,22 +10,22 @@ import Text.Parsec.String
 import Text.Parsec.Language
 import Text.Parsec.Token
 
-unitNumbers :: [String]
-unitNumbers = ["zero", "one", "two", "three", "four", "five", "six", "seven",
+unitStringNumbers :: [String]
+unitStringNumbers = ["zero", "one", "two", "three", "four", "five", "six", "seven",
               "eight", "nine", "ten", "eleven", "twelve", "thirteen", 
               "fourteen", "fifteen", "sixteen", "seventeen", "eighteen",
               "nineteen"]
 
-scaleNumbers :: [String]
-scaleNumbers = ["zero", "ten", "twenty", "thirty", "forty", "fifty"]
+scaleStringNumbers :: [String]
+scaleStringNumbers = ["zero", "ten", "twenty", "thirty", "forty", "fifty"]
 
-bigNumbers :: [String]
-bigNumbers = ["zero", "hundred", "thousand", "million"]
+bigStringNumbers :: [String]
+bigStringNumbers = ["zero", "hundred", "thousand", "million"]
 
 
-data Stmt = GivenNumber UnitNumber Stmt | Nil
+data Stmt = GivenNumber UnitStringNumber Stmt | Nil
           deriving Show
-data UnitNumber = Number String  | UnitInteger Integer
+data UnitStringNumber = StringNumber String  | IntegerNumber Integer
           deriving Show
 
 
@@ -59,32 +59,27 @@ mainparser = stmtWhitespace >> stmtparser CA.<* eof
       stmtparser :: Parser Stmt
       stmtparser = do { num <- stmtNatural
                        ; rest <- stmtparser
-                        ; return ((GivenNumber (UnitInteger num)) rest)
+                        ; return ((GivenNumber (IntegerNumber num)) rest)
                     }
                     <|> do { num <- stmtIdentifier
                       ; rest <- stmtparser
-                        ; return (GivenNumber (Number num) rest)
+                        ; return (GivenNumber (StringNumber num) rest)
                     }
-                    <|> do { return Nil
-                    }
+                    <|> return Nil
 
 
-interpreter :: Stmt -> Integer
-interpreter (GivenNumber unit stmt) = x + interpreter stmt
+interpreter :: Stmt -> Integer -> String
+interpreter (GivenNumber unit stmt) acc = stringacc ++ interpreter stmt newacc
   where
     x = translate unit
-interpreter Nil = 0
+    stringacc = if x > -1 then "" else show acc
+    newacc = if x > -1 then acc + x else 0
+interpreter Nil x = show x
 
 
-translate :: UnitNumber -> Integer
-translate (UnitInteger num) = num
-translate (Number num) = 9001
-
-
-
-
-
-
+translate :: UnitStringNumber -> Integer
+translate (IntegerNumber num) = num
+translate (StringNumber num) = 9001
 
 main :: IO ()
 main = do
@@ -92,5 +87,4 @@ main = do
   case parse mainparser "(stdin)" c of
           Left e -> do putStrLn "Error parsing input:"
                        print e
-          Right r -> print $ interpreter r
-
+          Right r -> print $ interpreter r 0
