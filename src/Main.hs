@@ -148,7 +148,7 @@ data UnitStringNumber = StringNumber String  | IntegerNumber Integer
           deriving Show
 
 def :: LanguageDef st
-def = emptyDef{ identStart =  alphaNum
+def = emptyDef{ identStart =  anyChar
               , identLetter = alphaNum <|> char '-'
               , reservedOpNames = ["and"]
               , reservedNames = []
