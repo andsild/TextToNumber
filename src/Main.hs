@@ -189,10 +189,10 @@ interpreter :: Stmt -> Integer -> String
 interpreter (GivenNumber unit stmt) acc = stringacc ++ interpreter stmt newacc
   where
     x = translate unit
-    stringacc = if x > -1 then " " else accOut ++ readStringNumber unit
+    stringacc = if x > -1 then "" else accOut ++ readStringNumber unit
     accOut = if acc > 0 then show acc ++ " " else ""
     newacc = if x > -1 then calculateNumber x acc else 0
-interpreter Nil x = if x > 0 then show x else " "
+interpreter Nil x = if x > 0 then show x else ""
 
 readStringNumber :: UnitStringNumber -> String
 readStringNumber (IntegerNumber num) = "meg"
@@ -216,5 +216,5 @@ main = do
   case parse mainparser "(stdin)" c of
           Left e -> do putStrLn "Error parsing input:"
                        print e
-          Right r -> print $ interpreter r 0
+          Right r -> putStrLn $  rstrip $  interpreter r 0
 
