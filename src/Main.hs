@@ -120,10 +120,9 @@ al = [ ("one", 1)
   ,("ninetyfive", 95)
   ,("ninetysix", 96)
   ,("ninetyseven", 97)
-  ,("ninetyeigh", 98)
+  ,("ninetyeight", 98)
   ,("ninetynine", 99)
   ]
-
 mapFromAL :: DM.Map String Int
 mapFromAL = DM.fromList al
 
