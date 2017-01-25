@@ -1,3 +1,4 @@
+[![Build Status](https://travis-ci.org/andsild/TextToNumber.svg?branch=master)](https://travis-ci.org/andsild/TextToNumber)
 # TextToNumberParser
 Something of an overkill to transform text to numbers.
 
