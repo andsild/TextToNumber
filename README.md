@@ -9,6 +9,8 @@ Something of an overkill to transform text to numbers.
 | Two hundred and 64            | 264           |
 | Two hundred and sixty 4       | 264           |
 | Two hundred and sixty-four    | 264           |
+  
+There is only support for _some_ positive integers, see TODO below.
 
 ## Note:
 Its one of my first haskell programs. I've seen one-liners that work for e.g. roman numerals so I realize theres a lot of room for improvement.  
