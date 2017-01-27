@@ -3,6 +3,7 @@ module Main
 
 import qualified Tests.TestParser as TP
 import qualified Tests.TestTokenizer as TT
+import qualified Tests.TestNumbers as TN
 import Test.HUnit
 
 main :: IO Counts
@@ -11,5 +12,6 @@ main = do
   runTestTT $ TestList [ 
     TP.tests
     , TT.tests
+    , TN.tests
     ]
 

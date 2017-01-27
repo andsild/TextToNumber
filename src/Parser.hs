@@ -11,16 +11,13 @@ import Data.String.Utils
 
 
 interpreter :: Stmt -> Int -> String
-interpreter (GivenNumber number stmt) acc = show parsedNumber ++ interpreter stmt 0
+interpreter (GivenNumber number stmt) acc
+  | acc == 0 = interpreter stmt $ parsedNumber
+  | otherwise = interpreter stmt $ calculateNumber parsedNumber acc 
   where
     parsedNumber = translate number
-interpreter (NonNumericString word stmt) _ = word ++ " " ++ interpreter stmt 0
+interpreter (NonNumericString word stmt) acc = word ++ " " ++ interpreter stmt 0
 interpreter Nil x = show x
-
-readStringNumber :: UnitStringNumber -> String
-readStringNumber (IntegerNumber num) = "meg"
-readStringNumber (StringNumber num) = num ++ " "
-
 
 calculateNumber :: Int -> Int -> Int
 calculateNumber x prev
@@ -31,4 +28,4 @@ calculateNumber x prev
 
 translate :: UnitStringNumber -> Int
 translate (IntegerNumber num) = num
-translate (StringNumber num) = fromJust $ elemIndex' num
+translate (StringNumber num) = fromJust $ Numbers.elemIndex' num

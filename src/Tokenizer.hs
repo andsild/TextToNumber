@@ -32,16 +32,6 @@ instance Eq UnitStringNumber where
   StringNumber s == IntegerNumber n = show n == s
   _ == _ = False
 
-mapFromAL :: DM.Map String Int
-mapFromAL = DM.fromList Numbers.al
-
-elemIndex' :: String -> Maybe Int
-elemIndex' s = num
-  where
-    unitOrScaleNumber = DM.lookup s mapFromAL
-    bigNumberResult = fmap (10 ^) $ elemIndex s Numbers.bigNumbers
-    num = maximum [unitOrScaleNumber, bigNumberResult]
-
 
 def :: LanguageDef st
 def = emptyDef{ identStart =  anyChar
@@ -78,7 +68,7 @@ mainparser = stmtWhitespace >> stmtparser CA.<* eof
                     }
                     <|> do { num <- stmtIdentifier
                       ; let numNoHyphen = numberWithoutHyphens num
-                            lookedUpNum = elemIndex' (with toLower numNoHyphen)
+                            lookedUpNum = Numbers.elemIndex' (with toLower numNoHyphen)
                       ; case lookedUpNum of 
                           Just number -> do
                               skipMany (stmtReservedOp "and")

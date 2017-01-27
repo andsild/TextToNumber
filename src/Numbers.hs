@@ -1,5 +1,8 @@
 module Numbers where
 
+import qualified Data.Map as DM
+import Data.List (elemIndex)
+
 al :: [(String, Int)]
 al = [ ("one", 1)
   ,("two", 2)
@@ -116,3 +119,12 @@ al = [ ("one", 1)
 bigNumbers :: [String]
 bigNumbers = ["zero", "hundred", "thousand", "million"]
 
+mapFromAL :: DM.Map String Int
+mapFromAL = DM.fromList Numbers.al
+
+elemIndex' :: String -> Maybe Int
+elemIndex' s = num
+  where
+    unitOrScaleNumber = DM.lookup s mapFromAL
+    bigNumberResult = fmap (10 ^) $ elemIndex s Numbers.bigNumbers
+    num = maximum [unitOrScaleNumber, bigNumberResult]
