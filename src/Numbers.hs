@@ -1,6 +1,7 @@
 module Numbers where
 
 import qualified Data.Map as DM
+import Data.String.Utils
 import Data.List (elemIndex)
 
 al :: [(String, Int)]
@@ -116,14 +117,18 @@ al = [ ("one", 1)
   ]
 
 
+-- hyphens are used as duds. e.g.
+-- ten and ten thousand are combinations of two words, and shouldnt be looked up here
 bigNumbers :: [String]
-bigNumbers = ["zero", "hundred", "thousand", "million"]
+bigNumbers = ["-", "-", "hundred", "thousand", "-", "-", "million"]
 
 mapFromAL :: DM.Map String Int
 mapFromAL = DM.fromList Numbers.al
 
 elemIndex' :: String -> Maybe Int
-elemIndex' s = num
+elemIndex' s
+  | s == "zero" = Just 0
+  | otherwise = num
   where
     unitOrScaleNumber = DM.lookup s mapFromAL
     bigNumberResult = fmap (10 ^) $ elemIndex s Numbers.bigNumbers

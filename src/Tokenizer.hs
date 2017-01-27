@@ -3,14 +3,14 @@ module Tokenizer where
 import qualified Control.Applicative as CA
 import qualified Numbers
 
+import Data.Char (toLower)
+import Data.List (map)
 import qualified Data.Map as DM
-import Data.Char
 import Data.Maybe
 import Data.Functor.Identity
-import Data.List
 import Data.String.Utils
 
-import Text.Parsec 
+import Text.Parsec
 import Text.Parsec.String
 import Text.Parsec.Language
 import Text.Parsec.Token
@@ -58,26 +58,30 @@ stmtWhitespace = whiteSpace lexer
 
 mainparser :: Parser Stmt
 mainparser = stmtWhitespace >> stmtparser CA.<* eof
-    where
+  where
       stmtparser :: Parser Stmt
-      stmtparser = do { num <- stmtNatural
-                      ; skipMany (stmtReservedOp "and")
-                       ; rest <- stmtparser
-                       ; let asInt = fromIntegral num 
-                             in return (GivenNumber (IntegerNumber asInt) rest)
-                    }
-                    <|> do { num <- stmtIdentifier
-                      ; let numNoHyphen = numberWithoutHyphens num
-                            lookedUpNum = Numbers.elemIndex' (with toLower numNoHyphen)
-                      ; case lookedUpNum of 
-                          Just number -> do
-                              skipMany (stmtReservedOp "and")
-                              rest <- stmtparser
-                              return (GivenNumber (StringNumber numNoHyphen) rest)
-                          Nothing -> do 
-                            rest <- stmtparser
-                            return ((NonNumericString num )rest)
-                    }
-                    <|> return Nil
+      stmtparser = do
+        { num <- stmtNatural
+        ; skipMany (stmtReservedOp "and")
+        ; rest <- stmtparser
+        ; let asInt = fromIntegral num
+              in return (GivenNumber (IntegerNumber asInt) rest)
+        }
+        <|> do
+          { num <- stmtIdentifier
+          ; let numNoHyphen = numberWithoutHyphens num
+                lookupKey = with toLower numNoHyphen
+                lookedUpNum = Numbers.elemIndex' (lookupKey)
+
+          ; case lookedUpNum of
+              Just number -> do
+                  skipMany (stmtReservedOp "and")
+                  rest <- stmtparser
+                  return (GivenNumber (StringNumber lookupKey) rest)
+              Nothing -> do
+                rest <- stmtparser
+                return ((NonNumericString num ) rest)
+        }
+        <|> return Nil
       numberWithoutHyphens num = replace "-" "" num
       with = Data.List.map

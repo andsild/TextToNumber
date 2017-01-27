@@ -31,10 +31,30 @@ test_translateConjunction = TestCase $ do
     Left e -> assertFailure "error in parser"
     Right r -> assertEqual "aa" expectedToken r
 
+test_tokenizeWrittenAndNumericNumbers = TestCase $ do
+  let number = "Two hundred and sixty 4"
+  let expectedToken = GivenNumber (StringNumber "two") (GivenNumber (StringNumber "hundred") (GivenNumber (StringNumber "sixty") (GivenNumber (IntegerNumber 4) Nil)))
+
+
+  case parse mainparser "testCase" number of
+    Left e -> assertFailure "error in parser"
+    Right r -> assertEqual ("parsing '" ++ number ++ "'") expectedToken r
+
+
+test_translateWordsAndNumbers = TestCase $ do
+  let numberTwoHundredAndSixtyFour = "one tiger and five bears"
+  let expectedToken = GivenNumber (StringNumber "one") (NonNumericString "tiger" (NonNumericString "and" (GivenNumber (StringNumber "five") (NonNumericString "bears" Nil))))
+
+  case parse mainparser "testCase" numberTwoHundredAndSixtyFour of
+    Left e -> assertFailure "error in parser"
+    Right r -> assertEqual "words and numbers" expectedToken r
+
 tests :: Test
 tests = TestList [
         TestLabel "test1" test_translateNumber
         , TestLabel "test1" test_translateConjunction
         , TestLabel "test1" test_tokenizeNonNumber
+        , TestLabel "Test1" test_translateWordsAndNumbers
+        , TestLabel "Test1" test_tokenizeWrittenAndNumericNumbers
   ]
 

@@ -1,10 +1,8 @@
 module Main where
 
-import qualified Numbers
 import Parser
 import Tokenizer
 
-import Data.Char
 import Data.String.Utils
 
 import Text.Parsec

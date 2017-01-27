@@ -30,7 +30,13 @@ executable TextToNumber
 
 test-suite Gentest
     main-is: TestMain.hs
-    other-modules: Main, Tests.TestParser, Tests.TestTokenizer Tokenizer, Parser, Numbers
+    other-modules: Main
+                   , Tests.TestNumbers
+                   , Tests.TestParser
+                   , Tests.TestTokenizer
+                   , Tokenizer
+                   , Parser
+                   , Numbers
     hs-source-dirs:      src, src/Tests
     build-depends:       base >=4.9
                         ,containers
