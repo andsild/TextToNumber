@@ -10,11 +10,11 @@ Something of an overkill to transform text to numbers.
 | Two hundred and sixty 4       | 264           |
 | Two hundred and sixty-four    | 264           |
   
-There is only support for _some_ positive integers, see TODO below.
+There is only support for positive integers.
 
 ## Note:
 Its one of my first haskell programs. I've seen one-liners that work for e.g. roman numerals so I realize theres a lot of room for improvement.  
 
 When I have time I'll work on the following improvements:
 * Floating point numbers
-* Two consequtive numbers after each other should be parsed individually (5000 3000 should yield 5000 3000 not a combination of the two)
+* Negative numbers

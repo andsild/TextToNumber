@@ -22,7 +22,6 @@ test_parseNumberZero = TestCase $ do
   assertEqual "parsing 'zero' as string"
               "0" output
 
-
 -- Small number in front a big number
 test_parseNumberCombineSingleWithHundred = TestCase $ do
   let tokenizedNumber = GivenNumber (StringNumber "two") (GivenNumber (StringNumber "hundred") Nil)
