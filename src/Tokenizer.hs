@@ -18,7 +18,7 @@ import Text.ParserCombinators.Parsec.Number (fractional, int)
 
 type FractionNumber = Double
 
-data Stmt = GivenNumber UnitStringNumber Stmt | NonNumericString String Stmt | Nil
+data Stmt = GivenNumber UnitStringNumber Stmt | NonNumericString String Stmt | Combiner Stmt | Nil
           deriving (Show)
 data UnitStringNumber = StringNumber String  | IntegerNumber Int | FractionalNumber FractionNumber
           deriving (Show)
@@ -73,6 +73,12 @@ mainparser = stmtWhitespace >> stmtparser CA.<* eof
           ; skipMany (stmtReservedOp "and")
           ; rest <- stmtparser
           ; return $ GivenNumber (IntegerNumber num) rest
+          }
+        <|> do
+          {
+            thenWord <- string "then"
+            ; rest <- stmtparser
+            ; return $ Combiner rest
           }
         <|> do
           { num <- stmtIdentifier
