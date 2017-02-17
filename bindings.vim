@@ -15,6 +15,7 @@ function! GetRightCommand(key)
         if a:key ==# 't'
             silent call neoterm#do('clear; stack test')
         endif
+    endif
 endfunction
 
 " nnoremap [Space]b :call neoterm#kill()<CR>:T clear; stack build<CR>
