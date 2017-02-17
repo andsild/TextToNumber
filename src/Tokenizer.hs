@@ -14,10 +14,13 @@ import Text.Parsec
 import Text.Parsec.String
 import Text.Parsec.Language
 import Text.Parsec.Token
+import Text.ParserCombinators.Parsec.Number (fractional, int)
+
+type FractionNumber = Double
 
 data Stmt = GivenNumber UnitStringNumber Stmt | NonNumericString String Stmt | Nil
           deriving (Show)
-data UnitStringNumber = StringNumber String  | IntegerNumber Int
+data UnitStringNumber = StringNumber String  | IntegerNumber Int | FractionalNumber FractionNumber
           deriving (Show)
 
 instance Eq Stmt where
@@ -54,34 +57,38 @@ stmtSemiSep    = semiSep lexer
 stmtWhitespace :: ParsecT String u Identity ()
 stmtWhitespace = whiteSpace lexer
 
-
-
 mainparser :: Parser Stmt
 mainparser = stmtWhitespace >> stmtparser CA.<* eof
   where
       stmtparser :: Parser Stmt
       stmtparser = do
-        { num <- stmtNatural
-        ; skipMany (stmtReservedOp "and")
-        ; rest <- stmtparser
-        ; let asInt = fromIntegral num
-              in return (GivenNumber (IntegerNumber asInt) rest)
+        try $ do
+          { num <- fractional
+            ; skipMany (stmtReservedOp "and")
+            ; rest <- stmtparser
+            ; return $ GivenNumber (FractionalNumber num) rest
         }
+        <|> do
+          { num <- int
+          ; skipMany (stmtReservedOp "and")
+          ; rest <- stmtparser
+          ; return $ GivenNumber (IntegerNumber num) rest
+          }
         <|> do
           { num <- stmtIdentifier
           ; let numNoHyphen = numberWithoutHyphens num
                 lookupKey = with toLower numNoHyphen
-                lookedUpNum = Numbers.elemIndex' (lookupKey)
+                lookedUpNum = Numbers.elemIndex' lookupKey
 
           ; case lookedUpNum of
               Just number -> do
                   skipMany (stmtReservedOp "and")
                   rest <- stmtparser
-                  return (GivenNumber (StringNumber lookupKey) rest)
+                  return $ GivenNumber (StringNumber lookupKey) rest
               Nothing -> do
                 rest <- stmtparser
-                return ((NonNumericString num ) rest)
+                return $ NonNumericString num rest
         }
         <|> return Nil
-      numberWithoutHyphens num = replace "-" "" num
+      numberWithoutHyphens = replace "-" ""
       with = Data.List.map

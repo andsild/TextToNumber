@@ -1,3 +1,15 @@
+---
+nix:
+  enable: true
+  pure: true
+  shell-file: ./shell.nix
+
+ghc-options:
+  "*": -fwarn-incomplete-patterns
+
 packages:
   - location: .
+extra-deps:
+    - parsec-numbers-0.1.0
 resolver: lts-7.8
+...
