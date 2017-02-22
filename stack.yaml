@@ -10,6 +10,6 @@ ghc-options:
 packages:
   - location: .
 extra-deps:
-    - parsec-numbers-0.1.0
+  - parsec-numbers-0.1.0
 resolver: lts-7.8
 ...

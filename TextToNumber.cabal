@@ -20,7 +20,7 @@ executable TextToNumber
   main-is:             Main.hs
   other-modules:       Numbers, Tokenizer, Parser
   -- other-extensions:
-  build-depends:       base >=4.9
+  build-depends:       base
                        ,containers
                        ,MissingH
                        ,parsec
@@ -39,7 +39,7 @@ test-suite Gentest
                    , Parser
                    , Numbers
     hs-source-dirs:      src, src/Tests
-    build-depends:       base >=4.9
+    build-depends:       base
                          , HUnit
                          , MissingH
                          , containers

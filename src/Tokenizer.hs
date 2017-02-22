@@ -20,7 +20,7 @@ type FractionNumber = Double
 
 data Stmt = GivenNumber UnitStringNumber Stmt | NonNumericString String Stmt | Combiner Stmt | Nil
           deriving (Show)
-data UnitStringNumber = StringNumber String  | IntegerNumber Int | FractionalNumber FractionNumber
+data UnitStringNumber = IntegerNumber Int | FractionalNumber FractionNumber
           deriving (Show)
 
 instance Eq Stmt where
@@ -31,8 +31,6 @@ instance Eq Stmt where
 
 instance Eq UnitStringNumber where
   IntegerNumber n1 == IntegerNumber n2 = n1 == n2
-  StringNumber s1 == StringNumber s2 = s1 == s2
-  StringNumber s == IntegerNumber n = show n == s
   _ == _ = False
 
 
@@ -90,7 +88,10 @@ mainparser = stmtWhitespace >> stmtparser CA.<* eof
               Just number -> do
                   skipMany (stmtReservedOp "and")
                   rest <- stmtparser
-                  return $ GivenNumber (StringNumber lookupKey) rest
+                  let isInt x = x == fromInteger (round f)
+                    in if isInt lookedUpNum 
+                        then return $ GivenNumber (IntegerNumber lookupNum) rest
+                        else return $ GivenNumber (FractionalNumber lookupNum) rest
               Nothing -> do
                 rest <- stmtparser
                 return $ NonNumericString num rest
